@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { Play, Trash2, AlertCircle, CheckCircle2, Table as TableIcon, Terminal, Clock, Copy, ChevronDown } from 'lucide-react';
+import { Play, Trash2, AlertCircle, CheckCircle2, Table as TableIcon, Terminal, Clock, Copy, ChevronDown, FileUp } from 'lucide-react';
 
 const QueryEditor = () => {
   const [query, setQuery] = useState('SELECT TOP 100 * FROM sys.databases');
@@ -9,6 +9,7 @@ const QueryEditor = () => {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [executionTime, setExecutionTime] = useState(null);
+  const fileInputRef = useRef(null);
 
   const executeQuery = async () => {
     if (!query.trim()) return;
@@ -48,6 +49,23 @@ const QueryEditor = () => {
     alert('Résultats copiés en format CSV !');
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setQuery(event.target.result);
+      setStatus(`Fichier "${file.name}" importé avec succès.`);
+    };
+    reader.onerror = () => {
+      setError("Erreur lors de la lecture du fichier.");
+    };
+    reader.readAsText(file);
+    // Reset input value to allow the same file to be uploaded again if needed
+    e.target.value = '';
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0f172a] overflow-hidden">
       {/* Editor Toolbar */}
@@ -61,6 +79,23 @@ const QueryEditor = () => {
             <Play className={`w-4 h-4 fill-current ${loading ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
             <span>Exécuter</span>
           </button>
+
+          <input
+            type="file"
+            accept=".sql"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 border border-slate-600/30"
+            title="Importer un fichier .sql"
+          >
+            <FileUp className="w-4 h-4" />
+            <span>Importer</span>
+          </button>
+
           <button
             onClick={clearResults}
             className="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 border border-slate-600/30"

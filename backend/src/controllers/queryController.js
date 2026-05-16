@@ -7,11 +7,16 @@ exports.execute = async (req, res) => {
   }
 
   try {
-    const result = await sqlService.executeQuery(query);
+    const results = await sqlService.executeScript(query);
+    // For the UI, we'll return the last result set that has data, or the very last result
+    const lastResultWithData = [...results].reverse().find(r => r.recordset && r.recordset.length > 0);
+    const finalResult = lastResultWithData || results[results.length - 1];
+    
     res.json({
-      recordset: result.recordset,
-      rowsAffected: result.rowsAffected,
-      output: result.output
+      recordset: finalResult.recordset || [],
+      rowsAffected: results.reduce((acc, r) => acc + (Array.isArray(r.rowsAffected) ? r.rowsAffected[0] : r.rowsAffected || 0), 0),
+      batchesCount: results.length,
+      status: 'success'
     });
   } catch (err) {
     res.status(500).json({ message: 'Query execution failed', error: err.message });
