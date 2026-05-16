@@ -1,43 +1,38 @@
 # SSMS Web Client
 
-A web-based SQL Server Management Studio alternative built with React and Node.js.
+Interface web moderne pour la gestion de SQL Server, inspirée de SSMS.
 
-## Features
-- **Authentication:** Connect via SQL Server Auth or Windows Auth.
-- **Object Explorer:** View databases and server logins.
-- **SQL Editor:** Run queries and see results in a tabular format.
-- **Administration:** Create/Drop databases, Create/Drop logins, and Backup databases.
+## 🚀 Fonctionnalités
+- **Authentification :** SQL Server (SA/Pass) & Windows Auth.
+- **Explorateur d'Objets :** Visualisation des bases de données et des logins serveurs.
+- **Éditeur SQL :** Exécution de requêtes avec rendu tabulaire, temps d'exécution et export CSV.
+- **Administration :** Création/Suppression de bases et de logins, lancements de sauvegardes (backups).
 
-## Tech Stack
-- **Frontend:** React, Vite, TailwindCSS, Lucide-React, Axios.
-- **Backend:** Node.js, Express, mssql (tedious).
+## 🛠️ Stack Technique
+- **Frontend :** React 19, Vite, TailwindCSS, Lucide Icons.
+- **Backend :** Node.js, Express, mssql.
+- **Database :** SQL Server 2022 (Docker).
 
-## Getting Started
+## 📦 Installation & Démarrage
 
-### Prerequisites
-- Node.js (v16+)
-- Access to a SQL Server instance.
-
-### Installation
-
-1. Install dependencies for the whole project:
+1. **Installer les dépendances :**
    ```bash
    npm install
    ```
 
-2. Start the backend:
+2. **Démarrer SQL Server (Docker) :**
    ```bash
-   cd backend
-   npm run dev
+   docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Password123!" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
    ```
 
-3. Start the frontend:
+3. **Lancer l'application (Backend + Frontend) :**
    ```bash
-   cd frontend
    npm run dev
    ```
+   - Frontend : `http://localhost:5173`
+   - Backend : `http://localhost:5000`
 
-## Development
-The project uses npm workspaces. You can run commands from the root:
-- `npm run dev --workspace=backend`
-- `npm run dev --workspace=frontend`
+## 🔑 Identifiants de test par défaut
+- **Serveur :** `localhost`
+- **Utilisateur :** `sa`
+- **Mot de passe :** `Password123!`
