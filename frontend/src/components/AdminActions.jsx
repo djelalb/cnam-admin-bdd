@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { PlusCircle, Trash2, HardDrive, AlertCircle, CheckCircle2, ShieldPlus, DatabaseZap, Save } from 'lucide-react';
+import { PlusCircle, Trash2, HardDrive, AlertCircle, CheckCircle2, ShieldPlus, DatabaseZap, Save, RotateCcw } from 'lucide-react';
 
 const AdminActions = () => {
   const [dbName, setDbName] = useState('');
@@ -151,28 +151,28 @@ const AdminActions = () => {
             </div>
           </section>
 
-          {/* Backup Management */}
+          {/* Backup & Restore Management */}
           <section className="bg-slate-800/40 backdrop-blur-md p-7 rounded-3xl border border-slate-700/50 shadow-xl hover:border-purple-500/30 transition-all duration-300 group lg:col-span-2">
             <div className="flex items-center gap-4 mb-8">
               <div className="bg-purple-500/10 p-2.5 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
                 <HardDrive className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-slate-100 tracking-tight">Sauvegardes (Backup)</h3>
+              <h3 className="text-xl font-bold text-slate-100 tracking-tight">Sauvegarde & Restauration</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-              <div className="md:col-span-4 space-y-2">
+              <div className="md:col-span-3 space-y-2">
                 <label className="block text-slate-400 text-[11px] font-bold uppercase tracking-widest ml-1">Base de données cible</label>
                 <input
                   type="text"
                   value={backupDb}
                   onChange={(e) => setBackupDb(e.target.value)}
                   className="w-full bg-slate-900/50 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-sm placeholder:text-slate-700"
-                  placeholder="Base à sauvegarder"
+                  placeholder="Nom de la base"
                 />
               </div>
               <div className="md:col-span-5 space-y-2">
-                <label className="block text-slate-400 text-[11px] font-bold uppercase tracking-widest ml-1">Chemin sur le serveur (Linux/Docker)</label>
+                <label className="block text-slate-400 text-[11px] font-bold uppercase tracking-widest ml-1">Chemin du fichier (.bak)</label>
                 <input
                   type="text"
                   value={backupPath}
@@ -181,22 +181,33 @@ const AdminActions = () => {
                   placeholder="/var/opt/mssql/data/..."
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4 flex gap-3">
                 <button
                   onClick={() => handleAction('databases/backup', { name: backupDb, path: backupPath })}
                   disabled={loading || !backupDb || !backupPath}
-                  className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                  className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  Lancer le Backup
+                  Sauvegarder
+                </button>
+                <button
+                  onClick={() => handleAction('databases/restore', { name: backupDb, path: backupPath })}
+                  disabled={loading || !backupDb || !backupPath}
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-white py-3 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                  title="Restaurer la base à partir du fichier (écrase l'existante)"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Restaurer
                 </button>
               </div>
             </div>
-            <div className="mt-6 flex items-start gap-3 bg-purple-500/5 p-4 rounded-xl border border-purple-500/10">
-              <AlertCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-slate-500 leading-relaxed italic">
-                Note : Pour les conteneurs Docker, assurez-vous que l'utilisateur <span className="text-slate-400 font-mono">mssql</span> a les droits d'écriture sur le dossier spécifié. Le chemin par défaut est <span className="text-slate-400 font-mono">/var/opt/mssql/data/</span>.
-              </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <div className="flex items-start gap-3 bg-purple-500/5 p-4 rounded-xl border border-purple-500/10">
+                <AlertCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-slate-500 leading-relaxed italic">
+                  Note : La restauration <strong>écrase</strong> la base de données existante. Assurez-vous qu'aucune transaction n'est en cours.
+                </p>
+              </div>
             </div>
           </section>
         </div>

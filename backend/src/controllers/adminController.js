@@ -65,3 +65,24 @@ exports.backupDatabase = async (req, res) => {
     res.status(500).json({ message: 'Failed to backup database', error: err.message });
   }
 };
+
+exports.restoreDatabase = async (req, res) => {
+  const { name, path } = req.body;
+  if (!name || !path) return res.status(400).json({ message: 'Database name and backup path are required' });
+
+  try {
+    // We use WITH REPLACE to overwrite any existing database with the same name
+    // We also use SINGLE_USER mode to kick off any active connections before restoring
+    const query = `
+      ALTER DATABASE [${name.replace(/\]/g, ']]')}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+      GO
+      RESTORE DATABASE [${name.replace(/\]/g, ']]')}] FROM DISK = '${path.replace(/'/g, "''")}' WITH REPLACE;
+      GO
+      ALTER DATABASE [${name.replace(/\]/g, ']]')}] SET MULTI_USER;
+    `;
+    await sqlService.executeScript(query);
+    res.json({ message: `Database ${name} restored successfully from ${path}` });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to restore database', error: err.message });
+  }
+};

@@ -5,10 +5,19 @@ exports.updateRow = async (req, res) => {
   const { schema, primaryKeys, oldData, newData } = req.body;
 
   try {
-    // 1. Switch context and execute in one go if possible, or use explicit DB reference
-    const setClause = Object.keys(newData)
-      .map(col => `[${col}] = ${formatValue(newData[col])}`)
+    // Filter out primary keys from newData to avoid updating identity columns
+    const updateData = { ...newData };
+    if (primaryKeys && primaryKeys.length > 0) {
+      primaryKeys.forEach(pk => delete updateData[pk]);
+    }
+
+    const setClause = Object.keys(updateData)
+      .map(col => `[${col}] = ${formatValue(updateData[col])}`)
       .join(', ');
+
+    if (!setClause) {
+      return res.status(400).json({ message: 'Aucune donnée modifiée' });
+    }
 
     const whereCols = primaryKeys && primaryKeys.length > 0 ? primaryKeys : Object.keys(oldData);
     const whereClause = whereCols

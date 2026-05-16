@@ -235,12 +235,18 @@ const TableViewer = ({ dbName, tableName, schema }) => {
                 {columns.map(col => (
                   <td key={col.COLUMN_NAME} className="px-6 py-2 border-r border-slate-800/30 truncate max-w-xs">
                     {editingRow === i ? (
-                      <input 
-                        type="text" 
-                        value={editData[col.COLUMN_NAME] === null ? '' : editData[col.COLUMN_NAME]}
-                        className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500"
-                        onChange={(e) => setEditData({ ...editData, [col.COLUMN_NAME]: e.target.value })}
-                      />
+                      primaryKeys.includes(col.COLUMN_NAME) ? (
+                        <span className="text-slate-500 opacity-50 px-2 py-1 italic bg-slate-900/30 rounded block w-full">
+                          {row[col.COLUMN_NAME]}
+                        </span>
+                      ) : (
+                        <input 
+                          type="text" 
+                          value={editData[col.COLUMN_NAME] === null ? '' : editData[col.COLUMN_NAME]}
+                          className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500"
+                          onChange={(e) => setEditData({ ...editData, [col.COLUMN_NAME]: e.target.value })}
+                        />
+                      )
                     ) : (
                       <span className={row[col.COLUMN_NAME] === null ? 'text-slate-600 italic' : ''}>
                         {row[col.COLUMN_NAME] === null ? 'NULL' : String(row[col.COLUMN_NAME])}

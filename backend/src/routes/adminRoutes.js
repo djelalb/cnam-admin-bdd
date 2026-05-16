@@ -7,5 +7,6 @@ router.post('/databases/drop', adminController.dropDatabase);
 router.post('/logins/create', adminController.createLogin);
 router.post('/logins/drop', adminController.dropLogin);
 router.post('/databases/backup', adminController.backupDatabase);
+router.post('/databases/restore', adminController.restoreDatabase);
 
 module.exports = router;
