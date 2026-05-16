@@ -57,7 +57,7 @@ const TableViewer = ({ dbName, tableName, schema }) => {
   const handleSaveUpdate = async (index) => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}`, {
+      await axios.put(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}/row`, {
         schema,
         primaryKeys,
         oldData: data[index],
@@ -77,7 +77,7 @@ const TableViewer = ({ dbName, tableName, schema }) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette ligne ?')) return;
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}`, {
+      await axios.delete(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}/row`, {
         data: { schema, primaryKeys, data: data[index] }
       });
       setSuccess('Ligne supprimée');
@@ -90,11 +90,20 @@ const TableViewer = ({ dbName, tableName, schema }) => {
   };
 
   const handleInsert = async () => {
+    // Filter out primary key (assuming it's identity) and empty values
+    const dataToInsert = { ...newData };
+    primaryKeys.forEach(pk => delete dataToInsert[pk]);
+    
+    if (Object.keys(dataToInsert).length === 0) {
+      setError("Veuillez remplir au moins un champ.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await axios.post(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}`, {
+      await axios.post(`http://localhost:5000/api/data/databases/${dbName}/tables/${tableName}/row`, {
         schema,
-        data: newData
+        data: dataToInsert
       });
       setSuccess('Nouvelle ligne ajoutée');
       setIsAdding(false);
