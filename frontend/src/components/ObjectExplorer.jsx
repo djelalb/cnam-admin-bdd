@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Database, User, ChevronDown, ChevronRight, RefreshCw, Server, ShieldCheck, Table as TableIcon, Columns } from 'lucide-react';
+import { Database, User, ChevronDown, ChevronRight, RefreshCw, Server, ShieldCheck, Table as TableIcon } from 'lucide-react';
 
 const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
   const [databases, setDatabases] = useState([]);
@@ -10,7 +10,8 @@ const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
   const [dbTables, setDbTables] = useState({}); // { dbName: [tables] }
   const [loadingTables, setLoadingTables] = useState({});
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const [dbRes, loginRes] = await Promise.all([
@@ -24,10 +25,10 @@ const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading]);
 
-  const fetchTables = async (dbName) => {
-    if (dbTables[dbName] || loadingTables[dbName]) return; // Guard against redundant calls
+  const fetchTables = useCallback(async (dbName) => {
+    if (dbTables[dbName] || loadingTables[dbName]) return;
     setLoadingTables(prev => ({ ...prev, [dbName]: true }));
     try {
       const response = await axios.get(`http://localhost:5000/api/explorer/databases/${dbName}/tables`);
@@ -37,24 +38,34 @@ const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
     } finally {
       setLoadingTables(prev => ({ ...prev, [dbName]: false }));
     }
-  };
+  }, [dbTables, loadingTables]);
 
   useEffect(() => {
-    fetchData();
-  }, [activeConnection]);
+    // Only fetch if we have an active connection
+    if (activeConnection) {
+      fetchData();
+    }
+  }, [activeConnection, fetchData]);
 
   const toggleSection = (section) => {
-    setExpanded({ ...expanded, [section]: !expanded[section] });
+    setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const toggleDatabase = (dbName) => {
-    const isNowExpanded = !databases.find(d => d.name === dbName)?.expanded;
-    setDatabases(databases.map(db => 
-      db.name === dbName ? { ...db, expanded: isNowExpanded } : db
-    ));
-    if (isNowExpanded) {
-      fetchTables(dbName);
-    }
+    setDatabases(prevDatabases => {
+      const currentDb = prevDatabases.find(d => d.name === dbName);
+      const isNowExpanded = !currentDb?.expanded;
+      
+      const updated = prevDatabases.map(db => 
+        db.name === dbName ? { ...db, expanded: isNowExpanded } : db
+      );
+
+      if (isNowExpanded) {
+        fetchTables(dbName);
+      }
+      
+      return updated;
+    });
   };
 
   return (
