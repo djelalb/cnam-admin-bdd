@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Database, User, ChevronDown, ChevronRight, RefreshCw, Server, ShieldCheck } from 'lucide-react';
+import { Database, User, ChevronDown, ChevronRight, RefreshCw, Server, ShieldCheck, Table as TableIcon, Columns } from 'lucide-react';
 
-const ObjectExplorer = ({ activeConnection }) => {
+const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
   const [databases, setDatabases] = useState([]);
   const [logins, setLogins] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState({ databases: true, logins: false });
+  const [dbTables, setDbTables] = useState({}); // { dbName: [tables] }
+  const [loadingTables, setLoadingTables] = useState({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -15,7 +17,7 @@ const ObjectExplorer = ({ activeConnection }) => {
         axios.get('http://localhost:5000/api/explorer/databases'),
         axios.get('http://localhost:5000/api/explorer/logins')
       ]);
-      setDatabases(dbRes.data);
+      setDatabases(dbRes.data.map(db => ({ ...db, expanded: false })));
       setLogins(loginRes.data);
     } catch (err) {
       console.error('Failed to fetch explorer data', err);
@@ -24,12 +26,35 @@ const ObjectExplorer = ({ activeConnection }) => {
     }
   };
 
+  const fetchTables = async (dbName) => {
+    if (dbTables[dbName]) return; // Already loaded
+    setLoadingTables(prev => ({ ...prev, [dbName]: true }));
+    try {
+      const response = await axios.get(`http://localhost:5000/api/explorer/databases/${dbName}/tables`);
+      setDbTables(prev => ({ ...prev, [dbName]: response.data }));
+    } catch (err) {
+      console.error(`Failed to fetch tables for ${dbName}`, err);
+    } finally {
+      setLoadingTables(prev => ({ ...prev, [dbName]: false }));
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [activeConnection]);
 
-  const toggle = (section) => {
+  const toggleSection = (section) => {
     setExpanded({ ...expanded, [section]: !expanded[section] });
+  };
+
+  const toggleDatabase = (dbName) => {
+    const isNowExpanded = !databases.find(d => d.name === dbName)?.expanded;
+    setDatabases(databases.map(db => 
+      db.name === dbName ? { ...db, expanded: isNowExpanded } : db
+    ));
+    if (isNowExpanded) {
+      fetchTables(dbName);
+    }
   };
 
   return (
@@ -55,7 +80,7 @@ const ObjectExplorer = ({ activeConnection }) => {
         {/* Databases Section */}
         <div className="space-y-1">
           <button 
-            onClick={() => toggle('databases')}
+            onClick={() => toggleSection('databases')}
             className="flex items-center gap-2 w-full text-left text-slate-300 hover:bg-slate-700/40 p-2 rounded-xl transition-all text-[13px] font-semibold group"
           >
             <div className="text-slate-500 group-hover:text-slate-300 transition-colors">
@@ -69,18 +94,39 @@ const ObjectExplorer = ({ activeConnection }) => {
           </button>
           
           {expanded.databases && (
-            <div className="ml-4 pl-4 border-l border-slate-700/50 space-y-0.5 py-1 animate-in slide-in-from-left-2 duration-200">
-              {databases.length === 0 && !loading && (
-                <div className="text-slate-500 text-[11px] py-2 px-3 italic">Aucune base utilisateur</div>
-              )}
+            <div className="ml-2 pl-2 border-l border-slate-700/30 space-y-1 py-1">
               {databases.map(db => (
-                <div 
-                  key={db.database_id} 
-                  className="flex items-center gap-3 text-slate-400 hover:text-slate-100 cursor-pointer py-1.5 px-3 hover:bg-slate-700/30 rounded-lg text-xs transition-all group"
-                  title={`Créée le : ${new Date(db.create_date).toLocaleString()}`}
-                >
-                  <Database className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400/70 transition-colors" />
-                  <span className="truncate">{db.name}</span>
+                <div key={db.database_id} className="space-y-1">
+                  <div 
+                    onClick={() => toggleDatabase(db.name)}
+                    className="flex items-center gap-2 text-slate-400 hover:text-slate-100 cursor-pointer py-1 px-2 hover:bg-slate-700/30 rounded-lg text-xs transition-all group"
+                  >
+                    <div className="text-slate-600 group-hover:text-slate-400">
+                      {db.expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </div>
+                    <Database className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400/70 transition-colors" />
+                    <span className="truncate">{db.name}</span>
+                    {loadingTables[db.name] && <RefreshCw className="w-3 h-3 animate-spin ml-auto opacity-50" />}
+                  </div>
+
+                  {db.expanded && dbTables[db.name] && (
+                    <div className="ml-4 pl-4 border-l border-slate-700/20 space-y-0.5 animate-in slide-in-from-left-1 duration-200">
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase py-1 tracking-tighter">
+                        <TableIcon className="w-3 h-3" />
+                        Tables
+                      </div>
+                      {dbTables[db.name].map(table => (
+                        <div 
+                          key={`${table.TABLE_SCHEMA}.${table.TABLE_NAME}`}
+                          onClick={() => onSelectTable(db.name, table.TABLE_NAME, table.TABLE_SCHEMA)}
+                          className="flex items-center gap-2 text-slate-500 hover:text-blue-300 cursor-pointer py-1 px-2 hover:bg-blue-500/10 rounded transition-all text-[11px]"
+                        >
+                          <TableIcon className="w-3 h-3 opacity-50" />
+                          <span className="truncate">{table.TABLE_NAME}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -90,7 +136,7 @@ const ObjectExplorer = ({ activeConnection }) => {
         {/* Logins Section */}
         <div className="space-y-1 pt-2">
           <button 
-            onClick={() => toggle('logins')}
+            onClick={() => toggleSection('logins')}
             className="flex items-center gap-2 w-full text-left text-slate-300 hover:bg-slate-700/40 p-2 rounded-xl transition-all text-[13px] font-semibold group"
           >
             <div className="text-slate-500 group-hover:text-slate-300 transition-colors">
@@ -98,9 +144,6 @@ const ObjectExplorer = ({ activeConnection }) => {
             </div>
             <ShieldCheck className="w-4 h-4 text-emerald-500/80" />
             <span>Sécurité / Logins</span>
-            <span className="ml-auto bg-slate-700/50 text-[10px] px-1.5 py-0.5 rounded-md text-slate-400 group-hover:bg-slate-700 transition-colors">
-              {logins.length}
-            </span>
           </button>
           
           {expanded.logins && (

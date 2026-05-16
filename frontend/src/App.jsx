@@ -3,12 +3,14 @@ import Login from './components/Login';
 import ObjectExplorer from './components/ObjectExplorer';
 import QueryEditor from './components/QueryEditor';
 import AdminActions from './components/AdminActions';
-import { Database, LogOut, Code, Settings } from 'lucide-react';
+import TableViewer from './components/TableViewer';
+import { Database, LogOut, Code, Settings, Table as TableIcon } from 'lucide-react';
 import axios from 'axios';
 
 function App() {
   const [activeConnection, setActiveConnection] = useState(null);
   const [activeTab, setActiveTab] = useState('query');
+  const [selectedTable, setSelectedTable] = useState(null); // { dbName, tableName, schema }
 
   const handleLoginSuccess = (connectionData) => {
     setActiveConnection(connectionData);
@@ -20,8 +22,13 @@ function App() {
       setActiveConnection(null);
     } catch (err) {
       console.error('Logout failed', err);
-      setActiveConnection(null); // Force logout locally anyway
+      setActiveConnection(null);
     }
+  };
+
+  const handleSelectTable = (dbName, tableName, schema) => {
+    setSelectedTable({ dbName, tableName, schema });
+    setActiveTab('viewer');
   };
 
   if (!activeConnection) {
@@ -31,7 +38,10 @@ function App() {
   return (
     <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden font-sans">
       {/* Sidebar - Object Explorer */}
-      <ObjectExplorer activeConnection={activeConnection} />
+      <ObjectExplorer 
+        activeConnection={activeConnection} 
+        onSelectTable={handleSelectTable} 
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -57,6 +67,21 @@ function App() {
                 <Code className="w-4 h-4" />
                 Query Editor
               </button>
+              
+              {selectedTable && (
+                <button
+                  onClick={() => setActiveTab('viewer')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === 'viewer' 
+                      ? 'bg-slate-700 text-blue-400 shadow-inner' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                  }`}
+                >
+                  <TableIcon className="w-4 h-4" />
+                  Table: {selectedTable.tableName}
+                </button>
+              )}
+
               <button
                 onClick={() => setActiveTab('admin')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -82,7 +107,15 @@ function App() {
 
         {/* Tab Content */}
         <main className="flex-1 min-h-0 relative">
-          {activeTab === 'query' ? <QueryEditor /> : <AdminActions />}
+          {activeTab === 'query' && <QueryEditor />}
+          {activeTab === 'admin' && <AdminActions />}
+          {activeTab === 'viewer' && selectedTable && (
+            <TableViewer 
+              dbName={selectedTable.dbName} 
+              tableName={selectedTable.tableName} 
+              schema={selectedTable.schema} 
+            />
+          )}
         </main>
       </div>
     </div>
