@@ -1,0 +1,28 @@
+{
+  "name": "cnam-admin-bdd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djelalb/cnam-admin-bdd.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/djelalb/cnam-admin-bdd/issues"
+  },
+  "homepage": "https://github.com/djelalb/cnam-admin-bdd#readme",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
