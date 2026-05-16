@@ -5,7 +5,7 @@ exports.updateRow = async (req, res) => {
   const { schema, primaryKeys, oldData, newData } = req.body;
 
   try {
-    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];`;
+    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];\nGO\n`;
     
     // Build SET clause
     const setClause = Object.keys(newData)
@@ -31,7 +31,7 @@ exports.deleteRow = async (req, res) => {
   const { schema, primaryKeys, data } = req.body;
 
   try {
-    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];`;
+    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];\nGO\n`;
     
     const whereCols = primaryKeys && primaryKeys.length > 0 ? primaryKeys : Object.keys(data);
     const whereClause = whereCols
@@ -51,7 +51,7 @@ exports.insertRow = async (req, res) => {
   const { schema, data } = req.body;
 
   try {
-    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];`;
+    const contextQuery = `USE [${dbName.replace(/\]/g, ']]')}];\nGO\n`;
     
     const columns = Object.keys(data).join(', ');
     const values = Object.values(data).map(formatValue).join(', ');

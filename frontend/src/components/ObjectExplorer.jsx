@@ -27,7 +27,7 @@ const ObjectExplorer = ({ activeConnection, onSelectTable }) => {
   };
 
   const fetchTables = async (dbName) => {
-    if (dbTables[dbName]) return; // Already loaded
+    if (dbTables[dbName] || loadingTables[dbName]) return; // Guard against redundant calls
     setLoadingTables(prev => ({ ...prev, [dbName]: true }));
     try {
       const response = await axios.get(`http://localhost:5000/api/explorer/databases/${dbName}/tables`);
